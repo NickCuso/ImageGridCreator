@@ -78,6 +78,11 @@ namespace ImageGridCreator
     {
       get
       {
+        if(string.IsNullOrWhiteSpace(GridSizeHeightText.Text))
+        {
+          return 800;
+        }
+
         int tileCountHeight = int.Parse(GridSizeHeightText.Text);
         double aspectRatio = (double)tileCountWidth / tileCountHeight;
         return (int)(targetResolutionWidth * aspectRatio);
@@ -116,7 +121,7 @@ namespace ImageGridCreator
       // Update Tile Count
       if (FileList.Items.Count > 0)
       {
-        GridSizeHeightText.Text = (FileList.Items.Count / tileCountWidth).ToString();
+        GridSizeHeightText.Text = (Math.Ceiling((double)FileList.Items.Count / tileCountWidth)).ToString("N0");
         ResolutionWidthText.Text = (firstImage.Width * tileCountWidth).ToString();
       }
       else
@@ -154,7 +159,7 @@ namespace ImageGridCreator
       {
         FileList.Items.Remove(FileList.SelectedItems[i]);
       }
-      GridSizeWidthText.Text = ((int)Math.Ceiling(Math.Sqrt(FileList.Items.Count))).ToString();
+      GridSizeWidthText.Text = ((int)Math.Round(Math.Sqrt(FileList.Items.Count))).ToString();
       UpdateDefaultSettings();
       Refresh();
     }
@@ -182,7 +187,7 @@ namespace ImageGridCreator
           int tileCountWidth = int.Parse(GridSizeWidthText.Text);
           int tileCountHeight = int.Parse(GridSizeHeightText.Text);
           int targetResolutionWidth = int.Parse(ResolutionWidthText.Text);
-          int tileWidth = (int)Math.Ceiling((double)targetResolutionWidth / tileCountWidth);
+          int tileWidth = (int)Math.Round((double)targetResolutionWidth / tileCountWidth);
           int tileHeight = tileWidth;
 
           MontageSettings settings = new MontageSettings
