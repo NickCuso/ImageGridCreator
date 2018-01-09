@@ -34,6 +34,11 @@ namespace HD
         directory = Environment.CurrentDirectory;
         fileName = fullPathToFile;
       }
+
+      if(directory.EndsWith(":"))
+      {
+        directory += "/";
+      }
     }
 
     public override string ToString()

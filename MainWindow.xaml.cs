@@ -33,13 +33,7 @@ namespace ImageGridCreator
       });
     #endregion
 
-    #region Init
-    public MainWindow()
-    {
-      InitializeComponent();
-    }
-    #endregion
-
+    #region Properties
     public MagickImage firstImage
     {
       get
@@ -78,7 +72,7 @@ namespace ImageGridCreator
     {
       get
       {
-        if(string.IsNullOrWhiteSpace(GridSizeHeightText.Text))
+        if (string.IsNullOrWhiteSpace(GridSizeHeightText.Text))
         {
           return 800;
         }
@@ -88,6 +82,14 @@ namespace ImageGridCreator
         return (int)(targetResolutionWidth * aspectRatio);
       }
     }
+    #endregion
+
+    #region Init
+    public MainWindow()
+    {
+      InitializeComponent();
+    }
+    #endregion
 
     #region Events
     void SelectFilesButton_Click(
@@ -100,20 +102,12 @@ namespace ImageGridCreator
         Filter = fileFormatFilter
       };
       bool? result = dialog.ShowDialog(this);
-      if (result.HasValue && result.Value)
+      if (result.HasValue == false || result.Value == false)
       {
-        for (int fileNameIndex = 0; fileNameIndex < dialog.FileNames.Length; fileNameIndex++)
-        {
-          string fileName = dialog.FileNames[fileNameIndex];
-          ImageFileInfo imageFileInfo = new ImageFileInfo(fileName);
-          FileList.Items.Add(imageFileInfo);
-        }
+        return;
       }
-      GridSizeWidthText.Text = ((int)Math.Ceiling(Math.Sqrt(FileList.Items.Count))).ToString();
 
-      UpdateDefaultSettings();
-
-      Refresh();
+      AddFiles(dialog.FileNames);
     }
 
     void UpdateDefaultSettings()
@@ -168,6 +162,10 @@ namespace ImageGridCreator
       object sender,
       SelectionChangedEventArgs e)
     {
+      if(FileList.SelectedItem == null)
+      {
+        return;
+      }
       PreviewImage.Source = new BitmapImage(new Uri(((ImageFileInfo)FileList.SelectedItem).fullPath));
     }
 
@@ -190,6 +188,15 @@ namespace ImageGridCreator
           int tileWidth = (int)Math.Round((double)targetResolutionWidth / tileCountWidth);
           int tileHeight = tileWidth;
 
+          MagickColor color = null;
+          for (int i = 0; i < FileList.Items.Count; i++)
+          {
+            ImageFileInfo imageFileInfo = (ImageFileInfo)FileList.Items[i];
+            MagickImage magickImage = new MagickImage(imageFileInfo.fullPath);
+            color = magickImage.BackgroundColor;
+            images.Add(magickImage);
+          }
+
           MontageSettings settings = new MontageSettings
           {
             // this is each image's size
@@ -197,15 +204,14 @@ namespace ImageGridCreator
             // Grid cell counts
             TileGeometry = new MagickGeometry(tileCountWidth, tileCountHeight)
           };
-          for (int i = 0; i < FileList.Items.Count; i++)
-          {
-            ImageFileInfo imageFileInfo = (ImageFileInfo)FileList.Items[i];
-            MagickImage magickImage = new MagickImage(imageFileInfo.fullPath);
-            images.Add(magickImage);
-          }
 
           using (IMagickImage saveResult = images.Montage(settings))
           {
+            if (color.A > 0)
+            {
+              saveResult.Transparent(color);
+            }
+
             if (saveResult.Width > targetResolutionWidth)
             {
               saveResult.Resize(targetResolutionWidth, targetResolutionHeight);
@@ -218,9 +224,84 @@ namespace ImageGridCreator
         }
       }
     }
+
+    void GridSizeWidthText_PreviewTextInput(
+      object sender,
+      TextCompositionEventArgs e)
+    {
+      if (ContainsOnlyNumbers(e.Text) == false)
+      {
+        e.Handled = true;
+      }
+    }
+
+    void GridSizeHeightText_PreviewTextInput(
+      object sender,
+      TextCompositionEventArgs e)
+    {
+      if (ContainsOnlyNumbers(e.Text) == false)
+      {
+        e.Handled = true;
+      }
+    }
+
+    void ResolutionWidthText_PreviewTextInput(
+      object sender,
+      TextCompositionEventArgs e)
+    {
+      if (ContainsOnlyNumbers(e.Text) == false)
+      {
+        e.Handled = true;
+      }
+    }
+
+    void ResolutionWidthText_TextChanged(
+      object sender,
+      TextChangedEventArgs e)
+    {
+      RefreshCompression();
+    }
+
+    void GridSizeWidthText_TextChanged(
+      object sender,
+      TextChangedEventArgs e)
+    {
+      UpdateDefaultSettings();
+      Refresh();
+    }
+
+    void GridSizeHeightText_TextChanged(
+      object sender,
+      TextChangedEventArgs e)
+    {
+      Refresh();
+    }
+
+    void FileList_Drop(
+      object sender,
+      DragEventArgs e)
+    {
+      AddFiles((string[])e.Data.GetData(DataFormats.FileDrop, false)); 
+    }
     #endregion
 
-    #region Helpers
+    #region Private Write
+    void AddFiles(
+      string[] fileNames)
+    {
+      for (int fileNameIndex = 0; fileNameIndex < fileNames.Length; fileNameIndex++)
+      {
+        string fileName = fileNames[fileNameIndex];
+        ImageFileInfo imageFileInfo = new ImageFileInfo(fileName);
+        FileList.Items.Add(imageFileInfo);
+      }
+      GridSizeWidthText.Text = ((int)Math.Ceiling(Math.Sqrt(FileList.Items.Count))).ToString();
+
+      UpdateDefaultSettings();
+
+      Refresh();
+    }
+
     void Move(
       bool moveUpVsDown)
     {
@@ -275,69 +356,6 @@ namespace ImageGridCreator
       return tempSelectedItems;
     }
 
-    static string FileCsv(
-      string[] extensions)
-    {
-      StringBuilder stringBuilder = new StringBuilder();
-      for (int i = 0; i < extensions.Length; i++)
-      {
-        if (i > 0)
-        {
-          stringBuilder.Append(";");
-        }
-
-        stringBuilder.Append("*.");
-        stringBuilder.Append(extensions[i]);
-      }
-
-      return stringBuilder.ToString();
-    }
-    #endregion
-
-    bool ContainsOnlyNumbers(
-      string value)
-    {
-      int test;
-      return int.TryParse(value, out test);
-    }
-
-    void GridSizeWidthText_PreviewTextInput(
-      object sender,
-      TextCompositionEventArgs e)
-    {
-      if (ContainsOnlyNumbers(e.Text) == false)
-      {
-        e.Handled = true;
-      }
-    }
-
-    void GridSizeHeightText_PreviewTextInput(
-      object sender,
-      TextCompositionEventArgs e)
-    {
-      if (ContainsOnlyNumbers(e.Text) == false)
-      {
-        e.Handled = true;
-      }
-    }
-
-    void ResolutionWidthText_PreviewTextInput(
-      object sender,
-      TextCompositionEventArgs e)
-    {
-      if (ContainsOnlyNumbers(e.Text) == false)
-      {
-        e.Handled = true;
-      }
-    }
-
-    void ResolutionWidthText_TextChanged(
-      object sender,
-      TextChangedEventArgs e)
-    {
-      RefreshCompression();
-    }
-
     void Refresh()
     {
       RefreshCompression();
@@ -360,16 +378,33 @@ namespace ImageGridCreator
         ResolutionHeightLabel.Content = $"x {targetResolutionHeight} ({compression:N0}% compression)";
       }
     }
+    #endregion
 
-    void GridSizeWidthText_TextChanged(object sender, TextChangedEventArgs e)
+    #region Private Read
+    static string FileCsv(
+      string[] extensions)
     {
-      UpdateDefaultSettings();
-      Refresh();
+      StringBuilder stringBuilder = new StringBuilder();
+      for (int i = 0; i < extensions.Length; i++)
+      {
+        if (i > 0)
+        {
+          stringBuilder.Append(";");
+        }
+
+        stringBuilder.Append("*.");
+        stringBuilder.Append(extensions[i]);
+      }
+
+      return stringBuilder.ToString();
     }
 
-    void GridSizeHeightText_TextChanged(object sender, TextChangedEventArgs e)
+    bool ContainsOnlyNumbers(
+      string value)
     {
-      Refresh();
+      int test;
+      return int.TryParse(value, out test);
     }
+    #endregion
   }
 }

@@ -8,7 +8,7 @@
         Title="MainWindow" Height="484.145" Width="442.961">
     <Grid>
         <Button x:Name="SelectFilesButton" Content="Select Files..." HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="SelectFilesButton_Click"/>
-        <ListBox x:Name="FileList" HorizontalAlignment="Left" Height="258" Margin="10,35,0,0" VerticalAlignment="Top" Width="332" SelectionMode="Extended" SelectionChanged="FileList_SelectionChanged"/>
+        <ListBox x:Name="FileList" HorizontalAlignment="Left" Height="258" Margin="10,35,0,0" VerticalAlignment="Top" Width="332" SelectionMode="Extended" SelectionChanged="FileList_SelectionChanged" Drop="FileList_Drop" AllowDrop="True"/>
         <Button x:Name="MoveUpButton" Content="Move Up" HorizontalAlignment="Left" Margin="347,57,0,0" VerticalAlignment="Top" Width="75" Click="MoveUpButton_Click"/>
         <Button x:Name="MoveDownButton" Content="Move Down" HorizontalAlignment="Left" Margin="347,107,0,0" VerticalAlignment="Top" Width="75" Click="MoveDownButton_Click"/>
         <Button x:Name="RemoveButton" Content="Remove" HorizontalAlignment="Left" Margin="347,82,0,0" VerticalAlignment="Top" Width="75" Click="RemoveButton_Click"/>
