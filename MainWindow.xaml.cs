@@ -216,7 +216,11 @@ namespace ImageGridCreator
             {
               saveResult.Resize(targetResolutionWidth, targetResolutionHeight);
             }
-            string fileName = dialog.FileName + ".png";
+            string fileName = dialog.FileName;
+            if(fileName.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase) == false)
+            {
+              fileName += ".png";
+            }
             saveResult.Write(fileName);
             Process process = new Process();
             process.StartInfo.FileName = fileName;
