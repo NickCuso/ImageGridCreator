@@ -162,7 +162,7 @@ namespace ImageGridCreator
       object sender,
       SelectionChangedEventArgs e)
     {
-      if(FileList.SelectedItem == null)
+      if (FileList.SelectedItem == null)
       {
         return;
       }
@@ -188,12 +188,10 @@ namespace ImageGridCreator
           int tileWidth = (int)Math.Round((double)targetResolutionWidth / tileCountWidth);
           int tileHeight = tileWidth;
 
-          MagickColor color = null;
           for (int i = 0; i < FileList.Items.Count; i++)
           {
             ImageFileInfo imageFileInfo = (ImageFileInfo)FileList.Items[i];
             MagickImage magickImage = new MagickImage(imageFileInfo.fullPath);
-            color = magickImage.BackgroundColor;
             images.Add(magickImage);
           }
 
@@ -202,23 +200,26 @@ namespace ImageGridCreator
             // this is each image's size
             Geometry = new MagickGeometry(tileWidth, tileHeight),
             // Grid cell counts
-            TileGeometry = new MagickGeometry(tileCountWidth, tileCountHeight)
+            TileGeometry = new MagickGeometry(tileCountWidth, tileCountHeight),
+            BackgroundColor = new MagickColor(0, 0, 0, 0),
+            TextureFileName = null
           };
 
           using (IMagickImage saveResult = images.Montage(settings))
           {
-            if (color.A > 0)
-            {
-              saveResult.Transparent(color);
-            }
+            saveResult.Format = MagickFormat.Png32;
+            saveResult.HasAlpha = true;
+            saveResult.Alpha(AlphaOption.Activate);
+            saveResult.BackgroundColor = new MagickColor(0, 0, 0, 0);
 
             if (saveResult.Width > targetResolutionWidth)
             {
               saveResult.Resize(targetResolutionWidth, targetResolutionHeight);
             }
-            saveResult.Write(dialog.FileName);
+            string fileName = dialog.FileName + ".png";
+            saveResult.Write(fileName);
             Process process = new Process();
-            process.StartInfo.FileName = dialog.FileName;
+            process.StartInfo.FileName = fileName;
             process.Start();
           }
         }
@@ -281,7 +282,7 @@ namespace ImageGridCreator
       object sender,
       DragEventArgs e)
     {
-      AddFiles((string[])e.Data.GetData(DataFormats.FileDrop, false)); 
+      AddFiles((string[])e.Data.GetData(DataFormats.FileDrop, false));
     }
     #endregion
 
